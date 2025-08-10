@@ -58,36 +58,42 @@ export const cloudStoragePlugin =
               : []),
           ]
 
-          if (!options.disablePayloadAccessControl) {
-            handlers.push(adapter.staticHandler)
-          } else {
-            // When disablePayloadAccessControl: true, add a redirect handler
-            // that redirects all file requests to direct storage URLs
+          if (options.disablePayloadAccessControl) {
+            // When disablePayloadAccessControl: true:
+            // - use the static handler for client uploads
+            // - use a redirect handler for all other requests that redirects to direct storage URLs
+
             handlers.push(async (req, args) => {
-              try {
-                const { filename } = args.params
-                const url = await adapter.generateURL?.({
-                  collection: existingCollection,
-                  data: args.doc || {},
-                  filename,
-                  prefix: options.prefix,
-                })
-
-                if (url) {
-                  return new Response(null, {
-                    status: 302,
-                    headers: {
-                      Location: url,
-                    },
+              if ('clientUploadContext' in args.params) {
+                return await adapter.staticHandler(req, args)
+              } else {
+                try {
+                  const { filename } = args.params
+                  const url = await adapter.generateURL?.({
+                    collection: existingCollection,
+                    data: args.doc || {},
+                    filename,
+                    prefix: options.prefix,
                   })
-                }
 
-                return new Response('Not Found', { status: 404 })
-              } catch (err) {
-                req.payload.logger.error(err)
-                return new Response('Internal Server Error', { status: 500 })
+                  if (url) {
+                    return new Response(null, {
+                      status: 302,
+                      headers: {
+                        Location: url,
+                      },
+                    })
+                  }
+
+                  return new Response('Not Found', { status: 404 })
+                } catch (err) {
+                  req.payload.logger.error(err)
+                  return new Response('Internal Server Error', { status: 500 })
+                }
               }
             })
+          } else {
+            handlers.push(adapter.staticHandler)
           }
 
           return {

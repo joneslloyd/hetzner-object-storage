@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.42.4] - 2025-08-09
+
+### Fixed
+
+- Fixed issue where `clientUploads: true` was not working when `disablePayloadAccessControl: true` was enabled
+
 ## [3.42.3] - 2025-06-13
 
 ### Fixed
