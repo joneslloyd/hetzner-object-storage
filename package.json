@@ -1,6 +1,6 @@
 {
   "name": "@joneslloyd/payload-storage-hetzner",
-  "version": "3.42.4",
+  "version": "3.55.1",
   "description": "Payload storage adapter for Hetzner Object Storage",
   "homepage": "https://github.com/joneslloyd/hetzner-object-storage",
   "repository": {
@@ -36,7 +36,7 @@
     "clean": "rimraf dist *.tsbuildinfo",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prepublishOnly": "npm run clean && npm run build",
+    "prepublishOnly": "pnpm run clean && pnpm run build",
     "version:patch": "pnpm version patch -m \"chore(release): v%s\"",
     "prepare": "husky"
   },
