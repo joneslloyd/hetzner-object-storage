@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.55.3] - 2026-03-09
+
+### Deprecated
+
+- **This package is deprecated.** Please use the official [`@payloadcms/storage-s3`](https://github.com/payloadcms/payload/tree/main/packages/storage-s3) plugin instead, which works with Hetzner Object Storage out of the box. See the README for a detailed migration guide.
+
+### Fixed
+
+- Fixed thumbnail preview issue with umlaut characters in filenames when `disablePayloadAccessControl` is enabled. The redirect handler now properly decodes URL-encoded filenames before generating Hetzner URLs.
 
 ## [3.42.4] - 2025-08-09
 

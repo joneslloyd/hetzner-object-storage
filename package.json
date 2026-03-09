@@ -1,6 +1,7 @@
 {
   "name": "@joneslloyd/payload-storage-hetzner",
-  "version": "3.55.2",
+  "version": "3.55.3",
+  "deprecated": "This package is deprecated. Please use @payloadcms/storage-s3 instead. See https://github.com/joneslloyd/hetzner-object-storage#migrating-to-payloadcmsstorage-s3 for migration instructions.",
   "description": "Payload storage adapter for Hetzner Object Storage",
   "homepage": "https://github.com/joneslloyd/hetzner-object-storage",
   "repository": {

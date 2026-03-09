@@ -1,8 +1,131 @@
 # Hetzner Object Storage for Payload CMS
 
-This package provides a simple way to use [Hetzner Object Storage](https://www.hetzner.com/storage/object-storage) with [Payload CMS](https://payloadcms.com).
+> **DEPRECATED:** This package is no longer maintained. Please use the official [`@payloadcms/storage-s3`](https://github.com/payloadcms/payload/tree/main/packages/storage-s3) plugin instead, which works with Hetzner Object Storage out of the box. See the [migration guide](#migrating-to-payloadcmsstorage-s3) below.
 
-## Features
+## Why is this package deprecated?
+
+This package was created to fill a gap when the official Payload S3 adapter did not work well with Hetzner Object Storage. Since then, the official `@payloadcms/storage-s3` plugin has matured and now handles Hetzner's S3-compatible API without issues.
+
+Additionally:
+
+- **Payload 3.70.0+ compatibility is broken.** Payload moved the external upload process from `beforeChange` to `afterChange` hooks ([v3.70.0 release notes](https://github.com/payloadcms/payload/releases/tag/v3.70.0)), and this plugin has not been updated to reflect that change.
+- **The only remaining differentiator was `cacheControl` header support**, which has been proposed upstream ([payloadcms/payload#14412](https://github.com/payloadcms/payload/pull/14412)).
+- **Consolidating around the official plugin** benefits the whole community; bugs are fixed faster, compatibility is maintained automatically, and there is one less dependency to manage.
+
+Thank you to everyone who used this package and reported issues. Your feedback directly informed the decision to sunset it.
+
+## Migrating to `@payloadcms/storage-s3`
+
+### 1. Install the official plugin
+
+```sh
+# Remove this package
+npm uninstall @joneslloyd/payload-storage-hetzner
+
+# Install the official S3 adapter
+npm install @payloadcms/storage-s3
+```
+
+### 2. Update your Payload config
+
+**Before** (this package):
+
+```ts
+import { hetznerStorage } from '@joneslloyd/payload-storage-hetzner'
+
+export default buildConfig({
+  plugins: [
+    hetznerStorage({
+      bucket: process.env.HETZNER_BUCKET,
+      region: 'fsn1',
+      credentials: {
+        accessKeyId: process.env.HETZNER_ACCESS_KEY_ID,
+        secretAccessKey: process.env.HETZNER_SECRET_ACCESS_KEY,
+      },
+      collections: {
+        media: true,
+        'media-with-prefix': {
+          prefix: 'uploads',
+        },
+      },
+      acl: 'public-read',
+      cacheControl: 'max-age=31536000',
+      clientUploads: true,
+    }),
+  ],
+})
+```
+
+**After** (`@payloadcms/storage-s3`):
+
+```ts
+import { s3Storage } from '@payloadcms/storage-s3'
+
+export default buildConfig({
+  plugins: [
+    s3Storage({
+      bucket: process.env.HETZNER_BUCKET,
+      config: {
+        endpoint: `https://${process.env.HETZNER_REGION}.your-objectstorage.com`,
+        credentials: {
+          accessKeyId: process.env.HETZNER_ACCESS_KEY_ID,
+          secretAccessKey: process.env.HETZNER_SECRET_ACCESS_KEY,
+        },
+        region: process.env.HETZNER_REGION, // 'fsn1', 'nbg1', or 'hel1'
+      },
+      collections: {
+        media: true,
+        'media-with-prefix': {
+          prefix: 'uploads',
+        },
+      },
+      // acl: 'public-read', — set via S3 bucket policy or per-collection config
+      clientUploads: true,
+    }),
+  ],
+})
+```
+
+### 3. Option mapping reference
+
+| This package | `@payloadcms/storage-s3` | Notes |
+|---|---|---|
+| `bucket` | `bucket` | Same. |
+| `region` | `config.region` | Same value (`fsn1`, `nbg1`, `hel1`), but passed inside the `config` object. |
+| *(implicit endpoint)* | `config.endpoint` | You must set this explicitly: `https://{region}.your-objectstorage.com`. |
+| `credentials` | `config.credentials` | Same shape; moved inside the `config` object. |
+| `collections` | `collections` | Same. `true` or `{ prefix }` per collection slug. |
+| `acl` | `acl` | Available per collection in the official plugin. |
+| `cacheControl` | *(not yet available)* | PR open: [payloadcms/payload#14412](https://github.com/payloadcms/payload/pull/14412). Use a bucket lifecycle policy or CDN headers as a workaround. |
+| `clientUploads` | `clientUploads` | Same. |
+| `disablePayloadAccessControl` | `disablePayloadAccessControl` | Same. Set per collection. |
+| `disableLocalStorage` | `disableLocalStorage` | Same; defaults to `true` in both plugins. |
+| `enabled` | `enabled` | Same. |
+
+### 4. CORS configuration
+
+CORS bucket configuration for client uploads is unchanged. The same `cors.json` and `aws s3api put-bucket-cors` command apply to both plugins. See the [Payload S3 storage docs](https://payloadcms.com/docs/upload/storage-adapters#s3-storage) for details.
+
+### 5. Verify
+
+After migrating, test the following:
+
+- Uploading a new file (server-side and client-side if enabled).
+- Viewing existing files and thumbnails in the admin panel.
+- Deleting a file.
+- Access control behaviour (if `disablePayloadAccessControl` is set).
+
+Existing files in your bucket do not need to be moved or renamed; the URL structure is the same.
+
+---
+
+## Legacy Documentation
+
+The original documentation for this package is preserved below for reference by users on pinned versions.
+
+---
+
+### Features
 
 - Store media files in Hetzner Object Storage instead of local disk
 - Support for client-side direct uploads to bypass server upload limits
@@ -10,7 +133,7 @@ This package provides a simple way to use [Hetzner Object Storage](https://www.h
 - Compatible with Payload's access control for non-public files
 - Built on the AWS SDK to interface with Hetzner's S3-compatible API
 
-## Installation
+### Installation
 
 ```sh
 npm install @joneslloyd/payload-storage-hetzner
@@ -22,7 +145,7 @@ yarn add @joneslloyd/payload-storage-hetzner
 pnpm add @joneslloyd/payload-storage-hetzner
 ```
 
-## Usage
+### Usage
 
 ```ts
 import { buildConfig } from 'payload'
@@ -64,7 +187,7 @@ export default buildConfig({
 })
 ```
 
-## Configuration Options
+### Configuration Options
 
 | Option                | Type                                               | Description                                                                 |
 | --------------------- | -------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -80,7 +203,7 @@ export default buildConfig({
 
 \* Required options
 
-## Access Control
+### Access Control
 
 By default, this plugin maintains Payload's access control. Your file URLs will remain the same (`/:collectionSlug/file/:filename`), and Payload will apply its access control policies when files are requested.
 
@@ -110,7 +233,7 @@ hetznerStorage({
 
 Common values: `max-age=31536000` (1 year), `max-age=86400` (1 day), `no-cache` (always revalidate). This applies to both server-side and client-side uploads.
 
-## Client-Side Uploads
+### Client-Side Uploads
 
 To allow larger file uploads that might exceed server limits (especially on serverless platforms), you can enable client-side uploads directly to Hetzner Object Storage:
 
@@ -145,11 +268,11 @@ When enabling client uploads, make sure to configure CORS on your Hetzner Object
 aws s3api put-bucket-cors --bucket your-bucket-name --cors-configuration file://cors.json --endpoint-url https://your-region.your-objectstorage.com
 ```
 
-## Custom Domains
+### Custom Domains
 
 Hetzner currently doesn't support custom domain names for buckets directly. If you want to use a custom domain, you'll need to set up domain forwarding. See the [Hetzner documentation](https://docs.hetzner.com/storage/object-storage) for more information.
 
-## Limitations
+### Limitations
 
 This adapter is built on Hetzner's S3-compatible API. Hetzner supports most but not all S3 features. Notable limitations:
 

@@ -69,10 +69,11 @@ export const cloudStoragePlugin =
               } else {
                 try {
                   const { filename } = args.params
+                  const decodedFilename = decodeURIComponent(filename)
                   const url = await adapter.generateURL?.({
                     collection: existingCollection,
                     data: args.doc || {},
-                    filename,
+                    filename: decodedFilename,
                     prefix: options.prefix,
                   })
 
